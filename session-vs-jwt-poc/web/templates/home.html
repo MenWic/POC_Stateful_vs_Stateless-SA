@@ -1,0 +1,67 @@
+{{define "content"}}
+<section class="hero">
+  <p class="eyebrow">Comparación de autenticación</p>
+  <h1>Session-Based vs JWT Authentication</h1>
+  <p class="lead">Dos aplicaciones equivalentes comparten usuarios, reglas e interfaz para comparar cómo conservan y validan la identidad.</p>
+</section>
+
+<section class="status-card" aria-labelledby="phase-status">
+  {{if .AuthenticationEnabled}}
+    {{if eq .SecurityMode "pure"}}<h2 id="phase-status">JWT puro stateless</h2>{{else if eq .SecurityMode "controlled"}}<h2 id="phase-status">JWT controlado con {{.Validation.StoreName}}</h2>{{else}}<h2 id="phase-status">Sesiones stateful con {{.Validation.StoreName}}</h2>{{end}}
+    <dl class="details">
+      <div><dt>Mecanismo</dt><dd>{{if eq .SecurityMode "session"}}Session{{else}}JWT{{end}}</dd></div>
+      <div><dt>Modo</dt><dd>{{if eq .SecurityMode "session"}}stateful{{else}}{{.SecurityMode}}{{end}}</dd></div>
+      <div><dt>Store de validación</dt><dd>{{.Validation.StoreName}}</dd></div>
+      <div>
+        <dt>Característica central</dt>
+        <dd>{{if eq .SecurityMode "pure"}}identidad validada mediante firma y claims{{else if eq .SecurityMode "controlled"}}token con controles de estado adicionales{{else}}identidad recuperada desde un ID opaco{{end}}</dd>
+      </div>
+    </dl>
+    {{if .Authenticated}}
+      <p class="alert alert-success" role="status">Autenticación activa para {{.Identity.Email}}</p>
+      {{if eq .SecurityMode "pure"}}
+        <p>La cookie contiene un JWT firmado. Esta instancia valida localmente firma y claims sin consultar un SessionStore ni el estado actual del usuario.</p>
+      {{else if eq .SecurityMode "controlled"}}
+        <p>La firma y los claims se validan primero; después se consulta la denylist en {{.Validation.StoreName}} y el estado actual del usuario en SQLite.</p>
+      {{else}}
+        <p>La cookie contiene solo un identificador opaco. Esta instancia consulta el estado de la sesión en {{.Validation.StoreName}} y el estado actual del usuario en SQLite.</p>
+      {{end}}
+      <a class="button" href="/dashboard">Abrir dashboard</a>
+    {{else}}
+      {{if eq .SecurityMode "pure"}}
+        <p>El login emite un JWT con expiración fija. Las instancias que comparten secreto, issuer y audience pueden validarlo sin compartir estado de sesión.</p>
+      {{else if eq .SecurityMode "controlled"}}
+        <p>El JWT conserva expiración fija y agrega revocación mediante {{.Validation.StoreName}}, estado activo y versión de autenticación.</p>
+        {{if eq .Validation.StoreName "memory"}}<p>Cada proceso mantiene su propia denylist; SQLite comparte los cambios globales de seguridad.</p>{{else}}<p>Las instancias comparten la denylist mediante Redis y el estado del usuario mediante SQLite.</p>{{end}}
+      {{else if eq .Validation.StoreName "memory"}}
+        <p>La autenticación mediante sesiones con el store memory está habilitada en esta aplicación.</p>
+        <p>Cada proceso conserva su propio store, por lo que una cookie emitida aquí no funciona automáticamente en otra instancia.</p>
+      {{else}}
+        <p>La autenticación mediante sesiones con el store {{.Validation.StoreName}} está habilitada en esta aplicación.</p>
+        <p>Las instancias que usan este mismo Redis comparten las sesiones y las revocaciones.</p>
+      {{end}}
+      <a class="button" href="/login">Iniciar sesión</a>
+    {{end}}
+  {{else}}
+    <h2 id="phase-status">Autenticación no configurada</h2>
+    <p>Esta ejecución puede validar credenciales en SQLite, pero no tiene una estrategia configurada para conservar autenticación entre solicitudes.</p>
+    <a class="button" href="/login">Validar credenciales</a>
+  {{end}}
+</section>
+
+<section aria-labelledby="comparison-title">
+  <h2 id="comparison-title">Comparación conceptual</h2>
+  <div class="card-grid">
+    <article>
+      <h3>Session</h3>
+      <p>La cookie contiene un ID opaco y el estado autenticado reside en el servidor.</p>
+      <p>En este POC el store puede ser memoria local o Redis compartido.</p>
+    </article>
+    <article>
+      <h3>JWT</h3>
+      <p>El modo puro valida firma y claims sin SessionStore.</p>
+      <p>El modo controlado agrega estado para revocación y comprobación del usuario.</p>
+    </article>
+  </div>
+</section>
+{{end}}

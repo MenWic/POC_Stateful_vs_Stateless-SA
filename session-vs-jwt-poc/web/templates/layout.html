@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} | Session-Based vs JWT</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Session vs JWT</a>
+    <nav aria-label="Navegación principal">
+      <a href="/" {{if eq .CurrentPage "home"}}aria-current="page"{{end}}>Inicio</a>
+      {{if .AuthenticationEnabled}}
+        {{if .Authenticated}}
+          <a href="/dashboard" {{if eq .CurrentPage "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
+          <a href="/account/password" {{if eq .CurrentPage "password"}}aria-current="page"{{end}}>Cambiar contraseña</a>
+          {{if .IsAdmin}}<a href="/admin/users" {{if eq .CurrentPage "admin"}}aria-current="page"{{end}}>Administración</a>{{end}}
+          <form method="post" action="/logout" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <button type="submit" class="nav-button">Cerrar sesión</button>
+          </form>
+        {{else}}
+          <a href="/login" {{if eq .CurrentPage "login"}}aria-current="page"{{end}}>Login</a>
+        {{end}}
+      {{else}}
+        <a href="/login" {{if eq .CurrentPage "login"}}aria-current="page"{{end}}>Credenciales</a>
+        <a href="/dashboard" {{if eq .CurrentPage "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
+        <a href="/account/password" {{if eq .CurrentPage "password"}}aria-current="page"{{end}}>Contraseña</a>
+        <a href="/admin/users" {{if eq .CurrentPage "admin"}}aria-current="page"{{end}}>Administración</a>
+      {{end}}
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="context-bar" aria-label="Contexto de ejecución">
+      <span><strong>Método:</strong> {{.Method}}</span>
+      <span><strong>Instancia:</strong> {{.InstanceID}}</span>
+      {{if .AuthenticationEnabled}}<span><strong>{{if eq .SecurityMode "controlled"}}Revocation store{{else if eq .SecurityMode "session"}}Store de sesión{{else}}Store{{end}}:</strong> {{.Validation.StoreName}}</span>{{end}}
+    </div>
+    {{template "content" .}}
+  </main>
+
+  <footer>
+    <p>POC académico sobre autenticación stateful y stateless</p>
+  </footer>
+</body>
+</html>

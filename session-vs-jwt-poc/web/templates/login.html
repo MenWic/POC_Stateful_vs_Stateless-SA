@@ -1,0 +1,30 @@
+{{define "content"}}
+<section class="narrow-section" aria-labelledby="login-title">
+  <p class="eyebrow">{{if eq .SecurityMode "pure"}}Autenticación stateless{{else if eq .SecurityMode "controlled"}}JWT con controles stateful{{else if .AuthenticationEnabled}}Autenticación stateful{{else}}Validación local{{end}}</p>
+  <h1 id="login-title">{{if .AuthenticationEnabled}}Iniciar sesión{{else}}Validar credenciales{{end}}</h1>
+  {{if .AuthenticationEnabled}}
+    {{if or (eq .SecurityMode "pure") (eq .SecurityMode "controlled")}}
+      <p>Un login correcto emitirá un JWT HS256 autocontenido en una cookie <code>access_token</code> con expiración fija.</p>
+    {{else}}
+      <p>Un login correcto creará una sesión nueva y emitirá una cookie con un ID opaco.</p>
+    {{end}}
+  {{else}}
+    <p>La aplicación consultará SQLite y verificará la contraseña con bcrypt. El resultado no conservará autenticación.</p>
+  {{end}}
+
+  {{if .SuccessMessage}}<p class="alert alert-success" role="status">{{.SuccessMessage}}</p>{{end}}
+  {{if .ErrorMessage}}<p class="alert alert-error" role="alert">{{.ErrorMessage}}</p>{{end}}
+
+  <form method="post" action="/login" class="form-stack">
+    <div>
+      <label for="email">Correo electrónico</label>
+      <input id="email" name="email" type="email" value="{{.Email}}" autocomplete="username" required autofocus>
+    </div>
+    <div>
+      <label for="password">Contraseña</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit">{{if .AuthenticationEnabled}}Iniciar sesión{{else}}Validar credenciales{{end}}</button>
+  </form>
+</section>
+{{end}}

@@ -1,0 +1,48 @@
+{{define "content"}}
+<section class="narrow-section" aria-labelledby="dashboard-title">
+  <p class="eyebrow">{{if .AuthenticationEnabled}}Ruta protegida{{else}}Ruta protegida no disponible{{end}}</p>
+  <h1 id="dashboard-title">Dashboard</h1>
+  {{if .AuthenticationEnabled}}
+    {{if .SuccessMessage}}<p class="alert alert-success" role="status">{{.SuccessMessage}}</p>{{end}}
+    <dl class="details">
+      <div><dt>Nombre</dt><dd>{{.Identity.Name}}</dd></div>
+      <div><dt>Correo</dt><dd>{{.Identity.Email}}</dd></div>
+      <div><dt>Rol</dt><dd>{{.Identity.Role}}</dd></div>
+      <div><dt>Método</dt><dd>{{.Identity.AuthenticationMethod}}</dd></div>
+      <div><dt>Tipo</dt><dd>{{if eq .SecurityMode "session"}}stateful{{else if eq .SecurityMode "pure"}}stateless{{else}}JWT controlado con estado adicional{{end}}</dd></div>
+      <div><dt>Modo</dt><dd>{{if eq .SecurityMode "session"}}stateful{{else}}{{.SecurityMode}}{{end}}</dd></div>
+      <div><dt>Instancia</dt><dd>{{.Identity.InstanceID}}</dd></div>
+      <div><dt>{{if eq .SecurityMode "controlled"}}Revocation store{{else if eq .SecurityMode "session"}}Store de sesión{{else}}Store{{end}}</dt><dd>{{.Validation.StoreName}}</dd></div>
+      <div><dt>Autenticado</dt><dd>{{.Identity.AuthenticatedAt}}</dd></div>
+      {{if .Identity.HasIdleExpiration}}<div><dt>Expiración inactiva</dt><dd>{{.Identity.IdleExpiresAt}} ({{.Identity.IdleTimeRemaining}})</dd></div>{{end}}
+      <div><dt>{{if .Identity.HasIdleExpiration}}Expiración absoluta{{else}}Expiración fija{{end}}</dt><dd>{{.Identity.AbsoluteExpiresAt}} ({{.Identity.AbsoluteTimeRemaining}})</dd></div>
+      <div><dt>{{if eq .Identity.AuthenticationMethod "jwt"}}jti{{else}}Credencial{{end}} truncado</dt><dd><code>{{.Identity.CredentialID}}</code></dd></div>
+      <div><dt>Duración de validación</dt><dd>{{.ValidationDuration}}</dd></div>
+      <div><dt>Validación realizada</dt><dd>{{.Validation.Description}}</dd></div>
+      <div><dt>Consulta de estado server-side</dt><dd>{{if .Validation.ServerStateChecked}}sí{{else}}no{{end}}</dd></div>
+      <div><dt>Consulta de usuario al validar</dt><dd>{{if .Validation.CurrentUserChecked}}sí{{else}}no{{end}}</dd></div>
+      <div>
+        <dt>Logout / credencial actual</dt>
+        <dd>{{if eq .SecurityMode "pure"}}solo borra la cookie; una copia vive hasta exp{{else if eq .SecurityMode "controlled"}}{{if eq .Validation.StoreName "redis"}}jti compartido mediante Redis{{else}}jti local al proceso{{end}}{{else if eq .Validation.StoreName "redis"}}sesión compartida mediante Redis{{else}}sesión local al proceso{{end}}</dd>
+      </div>
+      <div>
+        <dt>Estado de seguridad del usuario</dt>
+        <dd>{{if eq .SecurityMode "pure"}}no se consulta; el JWT previo vive hasta exp{{else}}Active y AuthVersion se consultan en SQLite e invalidan entre instancias{{end}}</dd>
+      </div>
+      <div><dt>Escalabilidad horizontal</dt><dd>{{if eq .SecurityMode "pure"}}validación local con claves compatibles{{else if eq .Validation.StoreName "redis"}}estado compartido mediante Redis{{else if eq .SecurityMode "controlled"}}la denylist no se comparte{{else}}requiere un store compartido{{end}}</dd></div>
+    </dl>
+    {{if eq .SecurityMode "pure"}}
+      <p class="alert alert-info" role="status">Validación local mediante firma HS256 y claims. La actividad no extiende la expiración.</p>
+    {{else if eq .SecurityMode "controlled"}}
+      <p class="alert alert-info" role="status">Firma y claims validados localmente; luego se consultaron la denylist en {{.Validation.StoreName}} y el usuario actual en SQLite.</p>
+    {{else}}
+      <p class="alert alert-info" role="status">Se consultó el estado de sesión en {{.Validation.StoreName}} y el usuario actual en SQLite para atender esta solicitud.</p>
+    {{end}}
+    <p class="measurement-note">La duración corresponde solo a la validación de autenticación de esta solicitud local; tiene ruido y no constituye un benchmark universal.</p>
+  {{else}}
+    <p class="alert alert-info" role="status">{{.ResponseState}}</p>
+    <p>Validar credenciales no concede acceso porque HTTP no conserva identidad entre solicitudes por sí solo.</p>
+    <a class="button button-secondary" href="/login">Ir a credenciales</a>
+  {{end}}
+</section>
+{{end}}

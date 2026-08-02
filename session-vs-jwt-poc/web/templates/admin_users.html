@@ -1,0 +1,51 @@
+{{define "content"}}
+<section class="wide-section" aria-labelledby="admin-title">
+  <p class="eyebrow">{{if .AuthenticationEnabled}}Autorización administrativa{{else}}Función no disponible sin autorización{{end}}</p>
+  <h1 id="admin-title">Administración de usuarios</h1>
+  {{if .AuthenticationEnabled}}
+    {{if eq .SecurityMode "session"}}
+      <p>Bloquear o desbloquear incrementa <code>AuthVersion</code>. Bloquear también revoca las sesiones conocidas del usuario.</p>
+    {{else if eq .SecurityMode "controlled"}}
+      <p>Bloquear o desbloquear incrementa <code>AuthVersion</code>. El modo controlado consulta estado y versión actuales en cada solicitud.</p>
+    {{else}}
+      <p>Bloquear o desbloquear incrementa <code>AuthVersion</code>. Un JWT emitido antes del bloqueo no consulta ese cambio y sigue válido hasta <code>exp</code>.</p>
+    {{end}}
+    {{if .SuccessMessage}}<p class="alert alert-success" role="status">{{.SuccessMessage}}</p>{{end}}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th scope="col">Nombre</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Acción</th></tr>
+        </thead>
+        <tbody>
+          {{range .Users}}
+          <tr>
+            <td>{{.Name}}</td>
+            <td>{{.Email}}</td>
+            <td>{{.Role}}</td>
+            <td>{{if .Active}}Activo{{else}}Bloqueado{{end}}</td>
+            <td>
+              {{if .Active}}
+                {{if .CanBlock}}
+                <form method="post" action="/admin/users/{{.ID}}/block" class="inline-form">
+                  <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                  <button type="submit" class="button-danger">Bloquear</button>
+                </form>
+                {{else}}Cuenta actual{{end}}
+              {{else}}
+                <form method="post" action="/admin/users/{{.ID}}/unblock" class="inline-form">
+                  <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                  <button type="submit" class="button-secondary">Desbloquear</button>
+                </form>
+              {{end}}
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}
+    <p class="alert alert-info" role="status">{{.ResponseState}}</p>
+    <p>Esta vista no lista usuarios ni permite bloquearlos hasta que el backend compruebe una identidad con rol de administrador.</p>
+  {{end}}
+</section>
+{{end}}

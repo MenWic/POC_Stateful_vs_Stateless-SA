@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Go
+bin/
+dist/
+coverage.out
+*.test
+*.prof
+
+# Runtime data
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.sqlite
+data/*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Redis local persistence
+dump.rdb
+appendonly.aof
+appendonlydir/
+
+# Docker overrides
+docker-compose.override.yml
